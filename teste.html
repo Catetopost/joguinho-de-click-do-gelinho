@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>RNG Roleta Insana</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #222;
+            color: #fff;
+            font-family: Arial, sans-serif;
+        }
+        #rngGame {
+            margin: 40px auto;
+            background: #181818;
+            border-radius: 16px;
+            padding: 32px 24px;
+            box-shadow: 0 4px 24px #0008;
+            width: 400px;
+            max-width: 95vw;
+        }
+        #rollBtn {
+            width: 100%;
+            font-size: 22px;
+            padding: 12px 0;
+            margin-bottom: 18px;
+            background: #4caf50;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        #rollBtn:active {
+            background: #388e3c;
+        }
+        #roleta {
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            min-height: 60px;
+            background: #111;
+            border-radius: 8px;
+            border: 2px solid #333;
+        }
+        #roleta span.rolando {
+            display: inline-block;
+            opacity: 0;
+            transform: translateY(20px) scale(0.98);
+            animation: roletaFade 0.18s cubic-bezier(.4,1.4,.6,1) forwards;
+        }
+        @keyframes roletaFade {
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+        #lastItem {
+            text-align: center;
+            font-size: 20px;
+            margin-bottom: 10px;
+            min-height: 60px;
+        }
+        #inventory {
+            font-size: 15px;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            max-height: 220px;
+            overflow-y: auto;
+        }
+        #inventory li {
+            margin-bottom: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        h2, h4 {
+            text-align: center;
+            margin: 0 0 10px 0;
+        }
+        #specialAnim {
+            position: fixed;
+            left: 0; top: 0; width: 100vw; height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 99999;
+            flex-direction: column;
+            font-family: Arial, sans-serif;
+            animation: fadeIn 0.4s;
+            background: none !important;
+            pointer-events: none;
+        }
+        #specialAnim > div {
+            background: rgba(0,0,0,0.85);
+            border-radius: 16px;
+            padding: 32px 24px;
+            min-width: 260px;
+            text-align: center;
+            box-shadow: 0 0 32px #000a;
+            pointer-events: auto;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to   { opacity: 1; }
+        }
+        #specialAnim .shine {
+            font-size: 48px;
+            color: gold;
+            text-shadow: 0 0 32px #fff, 0 0 64px gold, 0 0 8px #fff;
+            animation: shineAnim 1.2s infinite alternate;
+            margin-bottom: 24px;
+        }
+        @keyframes shineAnim {
+            from { filter: brightness(1.2); }
+            to   { filter: brightness(2.5); }
+        }
+        #moedas {
+            text-align: center;
+            font-size: 20px;
+            margin: 10px 0 20px 0;
+        }
+        #loja, #venda {
+            background: #181818;
+            border-radius: 12px;
+            padding: 18px 14px;
+            margin: 0 auto 20px auto;
+            max-width: 400px;
+        }
+        #loja h4, #venda h4 {
+            margin: 0 0 10px 0;
+            text-align: center;
+        }
+        #vendaItens {
+            max-height: 120px;
+            overflow-y: auto;
+        }
+        #specialAnim > * {
+            pointer-events: auto;
+        }
+        body.blur-bg #rngGame {
+            filter: blur(8px) brightness(0.7);
+            transition: filter 0.3s;
+        }
+    </style>
+</head>
+<body>
+<div id="rngGame">
+    <h2>Simplesmente Insano</h2>
+    <div id="contadorRoletada" style="text-align:right;font-size:13px;color:#aaa;margin-bottom:2px;">
+        Roletadas: <span id="numRoletada">0</span>
+    </div>
+    <button id="rollBtn">Roletar!</button>
+    <div id="roleta"></div>
+    <div id="lastItem"></div>
+    <h4>Inventário:</h4>
+    <ul id="inventory"></ul>
+
+    <!-- Loja e moedas -->
+    <div id="moedas">
+        Moedas: <span id="moedasValor">0</span>
+    </div>
+    <div id="loja">
+        <h4>Loja de Poções</h4>
+        <button onclick="comprarPocao(1)">Poção de Sorte 1 (2x) - 1.000 moedas</button><br>
+        <button onclick="comprarPocao(2)">Poção de Sorte 2 (5x) - 50.000 moedas</button><br>
+        <button onclick="comprarPocao(3)">Poção de Sorte 3 (10x) - 250.000 moedas</button><br>
+        <button onclick="comprarPocao(4)">Poção de Sorte Insana (50x) - 999.999.999 moedas</button><br>
+        <span id="pocaoStatus" style="font-size:14px;color:#4caf50;"></span>
+    </div>
+    <div id="venda">
+        <h4>Vender Itens</h4>
+        <div id="vendaItens"></div>
+    </div>
+</div>
+<script>
+const nomesBase = [
+    "Gato", "Cachorro", "Pato", "Sapo", "Dino", "Robô", "Alien", "Dragão", "Cubo", 
+    "Noob", "Pro", "Meme", "Chad", "Peixe", "Banana", "Coração", "Foguete", "Pizza", 
+    "Unicórnio", "Carro", "Ninja", "Samurai", "Vampiro", "Pirata", "Mago", "Cavaleiro", 
+    "Fantasma", "Slime", "Tubarão", "Pinguim", "Abacaxi", "Cacto", "Copo", "Gelinho", 
+    "Biscoito", "Café", "Gamer", "Pixel", "Arco-Íris", "Supremo", "Quântico", "Dourado", 
+    "Arcaico", "Futurista", "Místico", "Lendário", "Épico", "Raro", "Incomum", "Comum", 
+    "Absurdo", "Insano", "Divino", "Mítico", "Ultra", "Mega", "X", "Y", "Z", "Omega", "Sigma", 
+    "Delta", "Beta", "Alpha"
+];
+const sufixos = [
+    "do Caos", "da Galáxia", "do Espaço", "do Meme", "do Roblox", "do Universo", 
+    "do Abismo", "do Futuro", "do Passado", "do Pixel", "do Gamer", "Gelado", "Quente", 
+    "Misterioso", "Brilhante", "Sombrio", "Colorido", "Preto", "Branco", "Azul", "Vermelho", 
+    "Verde", "Roxo", "Dourado", "Prateado", "Arco-Íris"
+];
+
+// Poções
+const pocaoMultiplicador = [1, 2, 5, 10, 50];
+const pocaoPreco = [0, 1000, 50000, 250000, 999999999];
+const pocaoNome = ["", "Poção de Sorte 1", "Poção de Sorte 2", "Poção de Sorte 3", "Poção de Sorte Insana"];
+let pocao = {nivel: 0, fim: 0};
+
+// Função para definir raridade e cor baseado na chance
+function getRaridade(chance, nome = "") {
+    const odds = 1 / chance;
+    if (nome === "DEUS ONIPRESENTE") return {nome:"DEUS ONIPRESENTE", cor:"#ffd700", pi:true, format:"π"};
+    if (Math.abs(odds - Math.PI) < 0.0001) return {nome:"DEUS ONIPRESENTE", cor:"#ffd700", pi:true, format:"π"};
+    if (odds >= 1000000000) return {nome:"???", cor:"#fff", glitch:true, format:"???"};
+    else if (odds >= 30000000) return {nome:"INSANIDADE", cor:"#0ff", treme:true};
+    else if (odds >= 1000000) return {nome:"INSANO", cor:"#ff0", pisca:true};
+    else if (odds <= 99) return {nome:"Comum", cor:"#888"};
+    else if (odds <= 499) return {nome:"Incomum", cor:"#4caf50"};
+    else if (odds <= 4999) return {nome:"Raro", cor:"#2196f3"};
+    else if (odds <= 49999) return {nome:"Épico", cor:"#9c27b0"};
+    else if (odds <= 499999) return {nome:"Lendário", cor:"#ff9800"};
+    else if (odds <= 99999999) return {nome:"Mítico", cor:"#e91e63"};
+    return {nome:"ABSURDO", cor:"#000"};
+}
+
+// Função para formatar a chance como "1 em X"
+function formatChance(chance, nome = "") {
+    let rar = getRaridade(chance, nome);
+    if (rar.format === "???") return "1 em ???";
+    if (rar.format === "π") return "1 em π";
+    return "1 em " + Math.round(1/chance).toLocaleString('pt-BR');
+}
+
+// Gera mais de 5000 itens únicos
+const items = [];
+for(let i=0;i<5000;i++){
+    let exp = Math.random() ** 2.05;
+    let max = 999999999;
+    let min = 2;
+    let chance = 1 / Math.round(min + exp * (max-min));
+    let nome = nomesBase[Math.floor(Math.random()*nomesBase.length)] + " " +
+               nomesBase[Math.floor(Math.random()*nomesBase.length)] + " " +
+               sufixos[Math.floor(Math.random()*sufixos.length)];
+    let rar = getRaridade(chance, nome);
+    items.push([nome, chance, rar.cor, rar.nome]);
+}
+// Itens especiais
+items.push(["Gato de Schrödinger", 1/999999999, "#000", "ABSURDO"]);
+items.push(["Gelinho Supremo do Multiverso", 1/999999999, "#000", "ABSURDO"]);
+items.push(["Noob Divino do Roblox", 1/999999999, "#000", "ABSURDO"]);
+items.push(["DEUS ONIPRESENTE", 1/999999999999, "#ffd700", "DEUS ONIPRESENTE"]);
+
+let inventory = {};
+let moedas = 0;
+let rolling = false;
+let roletadas = 0;
+
+function atualizarContadorRoletada() {
+    document.getElementById("numRoletada").textContent = roletadas;
+}
+function atualizarMoedas() {
+    document.getElementById("moedasValor").textContent = moedas.toLocaleString("pt-BR");
+}
+function atualizarPocaoStatus() {
+    let s = "";
+    if (pocao.nivel > 0 && Date.now() < pocao.fim) {
+        let seg = Math.floor((pocao.fim - Date.now())/1000);
+        let min = Math.floor(seg/60);
+        seg = seg%60;
+        s = `Poção ativa: ${pocaoNome[pocao.nivel]} (${min}:${seg.toString().padStart(2,"0")})`;
+    }
+    document.getElementById("pocaoStatus").textContent = s;
+}
+setInterval(atualizarPocaoStatus, 500);
+
+function comprarPocao(nivel) {
+    if (moedas < pocaoPreco[nivel]) {
+        alert("Moedas insuficientes!");
+        return;
+    }
+    // Se for a mesma poção, soma o tempo
+    if (pocao.nivel === nivel && Date.now() < pocao.fim) {
+        pocao.fim += 5*60*1000; // soma 5 minutos
+        moedas -= pocaoPreco[nivel];
+        atualizarMoedas();
+        atualizarPocaoStatus();
+        alert(`Tempo da ${pocaoNome[nivel]} somado!`);
+        return;
+    }
+    // Se for poção mais forte, substitui e começa novo tempo
+    if (nivel > pocao.nivel || Date.now() >= pocao.fim) {
+        pocao.nivel = nivel;
+        pocao.fim = Date.now() + 5*60*1000;
+        moedas -= pocaoPreco[nivel];
+        atualizarMoedas();
+        atualizarPocaoStatus();
+        alert(`Você ativou ${pocaoNome[nivel]}!`);
+        return;
+    }
+    // Se tentar usar poção mais fraca enquanto uma mais forte está ativa, não faz nada
+    alert("Já existe uma poção mais forte ativa!");
+}
+
+function valorItem(item) {
+    return Math.round(1/item[1]);
+}
+
+function venderItem(nome) {
+    let item = items.find(i=>i[0]==nome);
+    if (!item || !inventory[nome]) return;
+    moedas += valorItem(item);
+    inventory[nome]--;
+    if (inventory[nome] <= 0) delete inventory[nome];
+    atualizarMoedas();
+    renderInventory();
+    renderVenda();
+}
+
+function renderVenda() {
+    let vendaDiv = document.getElementById("vendaItens");
+    vendaDiv.innerHTML = "";
+    let raridadeOrdem = ["DEUS ONIPRESENTE","???","INSANIDADE","INSANO","ABSURDO","Mítico","Lendário","Épico","Raro","Incomum","Comum"];
+    Object.entries(inventory)
+        .sort((a,b)=>{
+            let itemA = items.find(i=>i[0]==a[0]);
+            let itemB = items.find(i=>i[0]==b[0]);
+            let rarA = raridadeOrdem.indexOf(itemA[3]);
+            let rarB = raridadeOrdem.indexOf(itemB[3]);
+            if(rarA !== rarB) return rarA - rarB;
+            return b[1]-a[1];
+        })
+        .forEach(([name,qt])=>{
+            let item = items.find(i=>i[0]==name);
+            vendaDiv.innerHTML += `<div style="margin-bottom:4px;">
+                <span style="color:${item[2]};">${name}</span> 
+                <b>x${qt}</b> 
+                <button onclick="venderItem('${name.replace(/'/g,"\\'")}')" style="font-size:13px;padding:2px 10px;margin-left:8px;">Vender</button>
+                <span style="font-size:12px;color:#ffd700;margin-left:6px;">+${valorItem(item)} moedas</span>
+            </div>`;
+        });
+}
+
+document.getElementById("rollBtn").onclick = function() {
+    if (rolling) return;
+    rolling = true;
+    roletadas++;
+    atualizarContadorRoletada();
+
+    document.getElementById("lastItem").innerHTML = "";
+    let roleta = document.getElementById("roleta");
+    let shown = [];
+    function sorteiaPorChance() {
+        // Poção insana ativa: boost só nos raros!
+        if (pocao.nivel === 4 && Date.now() < pocao.fim) {
+            let chances = [];
+            let total = 0;
+            for (let item of items) {
+                let rar = item[3];
+                let multi = 1;
+                if (rar === "DEUS ONIPRESENTE") multi = 15000;
+                else if (rar === "INSANIDADE" || rar === "???" || rar === "INSANO") multi = 10000;
+                else if (rar === "ABSURDO") multi = 3000;
+                else if (rar === "Mítico") multi = 1000;
+                else if (rar === "Lendário") multi = 500;
+                else if (rar === "Épico") multi = 100;
+                else if (rar === "Raro") multi = 20;
+                else if (rar === "Incomum") multi = 2;
+                // Comum fica com 1
+                let chance = item[1] * multi;
+                chances.push({item, chance});
+                total += chance;
+            }
+            let rng = Math.random() * total;
+            let sum = 0;
+            for (let obj of chances) {
+                sum += obj.chance;
+                if (rng <= sum) return obj.item;
+            }
+            return chances[0].item;
+        }
+
+        // FILTRO DAS POÇÕES DE SORTE
+        let itensFiltrados = items;
+        if (pocao.nivel === 2 && Date.now() < pocao.fim) {
+            // Poção de Sorte 2: remove comuns
+            itensFiltrados = items.filter(i => i[3] !== "Comum");
+        }
+        if (pocao.nivel === 3 && Date.now() < pocao.fim) {
+            // Poção de Sorte 3: remove comuns e incomuns
+            itensFiltrados = items.filter(i => i[3] !== "Comum" && i[3] !== "Incomum");
+        }
+
+        let multiplicador = pocaoMultiplicador ? (pocaoMultiplicador[pocao.nivel] || 1) : 1;
+        let totalChance = itensFiltrados.reduce((acc, item) => acc + item[1]*multiplicador, 0);
+        let rng = Math.random() * totalChance;
+        let sum = 0;
+        for (let item of itensFiltrados) {
+            sum += item[1]*multiplicador;
+            if (rng <= sum) return item;
+        }
+        return itensFiltrados[0];
+    }
+    for(let i=0;i<40;i++){
+        shown.push(sorteiaPorChance());
+    }
+    let sorteado = sorteiaPorChance();
+    shown[shown.length-1] = sorteado;
+
+    let pos = 0;
+    let delay = 15;
+    function animarRoleta() {
+        let item = shown[pos];
+        let cor = item[2];
+        if (cor === "#000") cor = "#fff"; // Se for preto, força branco
+        roleta.innerHTML = `<span class="rolando" style="color:${cor};font-size:22px;font-weight:bold;">${item[0]}</span>
+<span class="rolando" style="font-size:15px;">[${item[3]}]</span>
+<span class="rolando" style="font-size:13px;color:#fff8;"> (${formatChance(item[1], item[0])})</span>`;
+        pos++;
+        if(pos < shown.length){
+            delay += 8;
+            setTimeout(animarRoleta, delay);
+        } else {
+            // Só aqui, DEPOIS da roleta, processa o resultado!
+            let name = sorteado[0], cor = sorteado[2], rar = sorteado[3];
+            let odds = 1 / sorteado[1];
+            let rarObj = getRaridade(sorteado[1], name);
+            inventory[name] = (inventory[name]||0)+1;
+
+            // EFEITOS INSANOS
+            if (rarObj.pi) {
+                efeitoPi(name, cor, rarObj.nome, sorteado[1]);
+            } else if (rarObj.glitch) {
+                bugTela();
+                efeitoEspecial("???", cor, name, rarObj.nome, sorteado[1], true);
+            } else if (rarObj.treme) {
+                tremerTela();
+                efeitoEspecial("INSANIDADE", cor, name, rarObj.nome, sorteado[1]);
+            } else if (rarObj.pisca) {
+                piscarTela();
+                efeitoEspecial("INSANO", cor, name, rarObj.nome, sorteado[1]);
+            } else if (odds >= 10000) {
+                efeitoEspecial("INCRÍVEL!", cor, name, rar, sorteado[1]);
+            } else {
+                document.getElementById("lastItem").innerHTML = `
+                    <b>Você conseguiu:</b><br>
+                    <span style="color:${cor};font-size:22px;font-weight:bold;">${name}</span><br>
+                    <span style="font-size:16px;">Raridade: <b style="color:${cor};">${rar}</b></span><br>
+                    <span style="font-size:14px;color:#fff8;">Chance: ${formatChance(sorteado[1], name)}</span>
+                `;
+                renderInventory();
+                renderVenda();
+                rolling = false;
+            }
+        }
+    }
+    animarRoleta();
+};
+atualizarMoedas();
+renderVenda();
+
+// Efeitos Especiais
+function efeitoEspecial(titulo, cor, name, rar, chance, glitch) {
+    let corAviso = (cor === "#000") ? "#fff" : cor;
+    let anim = document.createElement("div");
+    anim.id = "specialAnim";
+    document.body.classList.add("blur-bg"); // ativa o blur
+    anim.innerHTML = `
+        <div>
+            <div class="shine">${titulo}</div>
+            <div style="font-size:30px;color:${corAviso};font-weight:bold;margin-bottom:12px;">${name}</div>
+            <div style="font-size:20px;color:${corAviso};margin-bottom:8px;">${rar}</div>
+            <div style="font-size:18px;color:#fff8;">Chance: ${formatChance(chance, name)}</div>
+            <div style="margin-top:30px;">
+                <button id="closeAnim" style="font-size:20px;padding:10px 30px;border-radius:8px;background:#4caf50;color:#fff;border:none;cursor:pointer;">OK</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(anim);
+    document.getElementById("closeAnim").onclick = function() {
+        anim.remove();
+        document.body.classList.remove("blur-bg"); // remove o blur
+        if (glitch) desbugaTela();
+        despiscaTela();
+        destremerTela();
+        document.getElementById("lastItem").innerHTML = `
+            <b>Você conseguiu:</b><br>
+            <span style="color:${corAviso};font-size:22px;font-weight:bold;">${name}</span><br>
+            <span style="font-size:16px;">Raridade: <b style="color:${corAviso};">${rar}</b></span><br>
+            <span style="font-size:14px;color:#fff8;">Chance: ${formatChance(chance, name)}</span>
+        `;
+        renderInventory();
+        renderVenda();
+        rolling = false;
+    };
+    renderInventory();
+    renderVenda();
+}
+
+// Efeito DEUS ONIPRESENTE (π)
+function efeitoPi(name, cor, rar, chance) {
+    // Cria overlay preto cobrindo tudo
+    let overlay = document.createElement("div");
+    overlay.id = "piOverlay";
+    overlay.style.position = "fixed";
+    overlay.style.left = "0";
+    overlay.style.top = "0";
+    overlay.style.width = "100vw";
+    overlay.style.height = "100vh";
+    overlay.style.background = "#000";
+    overlay.style.zIndex = "100000";
+    overlay.style.display = "flex";
+    overlay.style.alignItems = "center";
+    overlay.style.justifyContent = "center";
+    overlay.style.flexDirection = "column";
+    overlay.style.transition = "opacity 1s";
+    document.body.appendChild(overlay);
+
+    // Cria o nome centralizado, mas invisível no início
+    let nomeDiv = document.createElement("div");
+    nomeDiv.textContent = "DEUS ONIPRESENTE";
+    nomeDiv.style.color = cor;
+    nomeDiv.style.fontSize = "48px";
+    nomeDiv.style.fontWeight = "bold";
+    nomeDiv.style.letterSpacing = "2px";
+    nomeDiv.style.opacity = "0";
+    nomeDiv.style.transition = "opacity 0.5s";
+    nomeDiv.style.textShadow = "0 0 32px #fff, 0 0 64px gold, 0 0 8px #fff";
+    overlay.appendChild(nomeDiv);
+
+    // Após 2.5 segundos, mostra o nome e treme a tela
+    setTimeout(() => {
+        nomeDiv.style.opacity = "1";
+        document.body.style.animation = "tremerTela 0.08s 30 alternate";
+    }, 2500);
+
+    // Após 5 segundos, some o overlay e mostra o modal especial
+    setTimeout(() => {
+        overlay.style.opacity = "0";
+        setTimeout(() => {
+            overlay.remove();
+            document.body.style.animation = ""; // para o tremor
+
+            // Agora mostra o modal com blur e animação
+            let anim = document.createElement("div");
+            anim.id = "specialAnim";
+            document.body.classList.add("blur-bg");
+            anim.innerHTML = `
+                <div>
+                    <div id="piNome" style="font-size:40px;color:${cor};font-weight:bold;margin-bottom:12px;opacity:0;transform:translateY(-200px);transition:all 0.7s cubic-bezier(.7,2,.3,1);text-align:center;">${name}</div>
+                    <div id="piChance" style="font-size:28px;color:#fff;margin-bottom:8px;opacity:0;transform:translateY(-200px);transition:all 0.7s cubic-bezier(.7,2,.3,1) 0.6s;text-align:center;">Chance: 1 em π</div>
+                    <div style="margin-top:30px;text-align:center;">
+                        <button id="closeAnim" style="font-size:20px;padding:10px 30px;border-radius:8px;background:#222;color:#fff;border:none;cursor:pointer;opacity:0;transition:opacity 0.3s 1.2s;">OK</button>
+                    </div>
+                </div>
+            `;
+document.body.appendChild(anim);
+
+            setTimeout(()=>{
+                document.getElementById("piNome").style.opacity = 1;
+                document.getElementById("piNome").style.transform = "translateY(0)";
+            }, 100);
+            setTimeout(()=>{
+                document.getElementById("piChance").style.opacity = 1;
+                document.getElementById("piChance").style.transform = "translateY(0)";
+            }, 800);
+            setTimeout(()=>{
+                document.getElementById("closeAnim").style.opacity = 1;
+            }, 1400);
+
+            document.getElementById("closeAnim").onclick = function() {
+                anim.remove();
+                document.body.classList.remove("blur-bg");
+                document.body.style.background = "";
+                document.body.style.animation = "";
+
+                // Tremor após fechar (5 segundos)
+                document.body.style.animation = "tremerTela 0.08s 60 alternate";
+                setTimeout(()=>{
+                    document.body.style.animation = "";
+                }, 5000);
+
+                document.getElementById("lastItem").innerHTML = `
+                    <b>Você conseguiu:</b><br>
+                    <span style="color:${cor};font-size:22px;font-weight:bold;">${name}</span><br>
+                    <span style="font-size:16px;">Raridade: <b style="color:${cor};">${rar}</b></span><br>
+                    <span style="font-size:14px;color:#fff8;">Chance: 1 em π</span>
+                `;
+                renderInventory();
+                renderVenda();
+                rolling = false;
+            };
+            renderInventory();
+            renderVenda();
+        }, 1000); // Espera o fade do overlay
+    }, 5000); // 5 segundos de tela preta
+}
+
+// Piscar tela
+function piscarTela() {
+    document.body.style.animation = "piscarTela 0.15s 10 alternate";
+}
+function despiscaTela() {
+    document.body.style.animation = "";
+}
+const stylePisca = document.createElement("style");
+stylePisca.innerHTML = `
+@keyframes piscarTela {
+    0% { background: #222; }
+    100% { background: #ff0; }
+}`;
+document.head.appendChild(stylePisca);
+
+// Tremer tela
+function tremerTela() {
+    document.body.style.animation = "tremerTela 0.08s 80 alternate";
+}
+function destremerTela() {
+    document.body.style.animation = "";
+}
+const styleTreme = document.createElement("style");
+styleTreme.innerHTML = `
+@keyframes tremerTela {
+    0% { transform: translate(0,0);}
+    20% { transform: translate(-10px, 4px);}
+    40% { transform: 8px, -8px);}
+    60% { transform: translate(-6px, 6px);}
+    80% { transform: translate(4px, -4px);}
+    100% { transform: translate(0,0);}
+}`;
+document.head.appendChild(styleTreme);
+
+// Glitch/bugar tela
+function bugTela() {
+    document.body.classList.add("glitch");
+    if (!document.getElementById("glitchStyle")) {
+        const style = document.createElement("style");
+        style.id = "glitchStyle";
+        style.innerHTML = `
+body.glitch {
+    animation: glitchBg 0.12s infinite alternate;
+    filter: contrast(2) hue-rotate(90deg) blur(1px);
+}
+@keyframes glitchBg {
+    0% { background: #fff; }
+    20% { background: #f0f; }
+    40% { background: #0ff; }
+    60% { background: #ff0; }
+    80% { background: #000; }
+    100% { background: #fff; }
+}`;
+        document.head.appendChild(style);
+    }
+}
+function desbugaTela() {
+    document.body.classList.remove("glitch");
+    document.body.style.filter = "";
+}
+
+function renderInventory() {
+    let raridadeOrdem = ["DEUS ONIPRESENTE","???","INSANIDADE","INSANO","ABSURDO","Mítico","Lendário","Épico","Raro","Incomum","Comum"];
+    let inv = document.getElementById("inventory");
+    inv.innerHTML = "";
+    Object.entries(inventory)
+        .sort((a,b)=>{
+            let itemA = items.find(i=>i[0]==a[0]);
+            let itemB = items.find(i=>i[0]==b[0]);
+            let rarA = raridadeOrdem.indexOf(itemA[3]);
+            let rarB = raridadeOrdem.indexOf(itemB[3]);
+            if(rarA !== rarB) return rarA - rarB;
+            return b[1]-a[1];
+        })
+        .forEach(([name,qt])=>{
+            let item = items.find(i=>i[0]==name);
+            inv.innerHTML += `<li style="color:${item[2]};margin-bottom:2px;">
+                ${name} <b>x${qt}</b>
+                <span style="font-size:12px;">[${item[3]}]</span>
+                <span style="font-size:11px;color:#fff8;">(${formatChance(item[1], name)})</span>
+            </li>`;
+        });
+}
+</script>
+</body>
+</html>

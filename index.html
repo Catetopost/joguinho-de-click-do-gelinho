@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jogo final</title>
+    <style>
+        html{
+            cursor: url('./IMG/cursor-rainbow.ani'), auto; /* Define o cursor personalizado */
+            z-index: 99999;
+        }
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden; /* Evita barras de rolagem */
+            background-color: #7bbbe1;
+           
+        }
+        #contadorGelinho {
+            position: absolute;
+            top: 100px;
+            left: 670px;
+            font-size: 87px;
+            color: black; /* Cor do texto */
+            z-index: 10; /* Coloca o contador acima de outros elementos */
+            font-family: 'Minecraft', sans-serif; /* Fonte do texto */
+        }
+
+        .fundo {
+            position: fixed; /* Fixa o fundo na tela */
+            top: 0;
+            left: 0;
+            width: 100vw; /* Largura total da janela */
+            height: 100vh; /* Altura total da janela */
+            background-image: url('./IMG/fundo praia.jpg'); /* Caminho da imagem de fundo */
+            background-size: cover; /* Faz a imagem cobrir toda a tela */
+            background-position: center; /* Centraliza a imagem */
+            background-repeat: no-repeat; /* Evita repetição da imagem */
+            z-index: -1; /* Coloca o fundo atrás de todos os elementos */
+        }
+
+        button{
+            font-family: 'Minecraft', sans-serif; /* Fonte do texto */
+            font-size: 20px; /* Tamanho da fonte */
+            letter-spacing: 0.1em; /* Espaçamento entre letras */
+            color: white; /* Cor do texto */
+            background-color: #4CAF50; /* Verde */
+            border: none; /* Sem borda */
+            border-radius: 5px; /* Bordas arredondadas */
+            cursor: pointer; /* Muda o cursor para indicar que é clicável */
+            margin: 10px 0; /* Margem vertical entre os botões */
+            z-index: 100;
+        }
+
+        #botaoUpgrade {
+            position: absolute;
+            top: 520px;
+            left: 300px;
+            padding: 10px 20px;
+            font-size: 40px;
+            background-color: #4CAF50; /* Verde */
+            color: white; /* Texto branco */
+            border: none; /* Sem borda */
+            border-radius: 5px; /* Bordas arredondadas */
+            cursor: pointer; /* Muda o cursor para indicar que é clicável */
+        }
+
+        @keyframes girarGelo {
+            0% {
+                transform: translate(-50%, -50%) rotate(0deg); /* Sem rotação */
+            }
+            50% {
+                transform: translate(-50%, -50%) rotate(30deg); /* Gira até 30 graus */
+            }
+            100% {
+                transform: translate(-50%, -50%) rotate(-30deg); /* Gira para -30 graus */
+            }
+        }
+
+
+        #clickCooler {
+            width: 300px;
+            height: 300px;
+            position: absolute;
+            top: 55%;
+            left: 49%;
+            transform: translate(-50%, -50%);
+            cursor: pointer;
+            z-index: 20;
+            animation: girarGelo 6s infinite alternate ease-in-out; /* Animação suave */
+            transform-origin: center center; /* Garante que o centro seja o ponto de rotação */
+        }
+
+        #clickCooler.paused {
+            animation-play-state: paused; /* Pausa a animação */
+        }
+
+        body.modo-dourado {
+            animation: piscarDourado 0.5s infinite alternate; /* Pisca a cada 0.5s */
+        }
+
+        @keyframes piscarDourado {
+            0% {
+                background-color: #ffd700; /* Dourado */
+            }
+            100% {
+                background-color: #7bbbe1; /* Cor original */
+            }
+        }
+
+        .fundo.modo-dourado {
+            filter: brightness(1.5) saturate(2); /* Deixa os gelos mais brilhantes */
+        }
+
+        .modal {
+            display: none; /* Escondido por padrão */
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.5); /* Fundo escuro semi-transparente */
+            backdrop-filter: blur(5px); /* Efeito de desfoque no fundo */
+            z-index: 100; /* Coloca o modal acima de tudo */
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            width: 400px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .modal-content h2 {
+            margin-bottom: 20px;
+        }
+
+        .modal-content button {
+            display: block;
+            margin: 10px auto;
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .modal-content button:hover {
+            background-color: #45a049;
+        }
+
+        #fecharModal {
+            background-color: #f44336; /* Vermelho para o botão de fechar */
+        }
+
+        #fecharModal:hover {
+            background-color: #d32f2f;
+        }
+
+        .gelo-animado {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            z-index: -1;
+            opacity: 1;
+            transform: translateY(0);
+            animation: aparecerDesaparecer 2s forwards; /* Animação suave */
+        }
+
+        @keyframes aparecerDesaparecer {
+            0% {
+                opacity: 1;
+                transform: translateY(0); /* Posição inicial */
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-50px); /* Move para cima e desaparece */
+            }
+        }
+
+        #areaClicavel {
+            position: absolute;
+            top: 55%;
+            left: 49%;
+            transform: translate(-50%, -50%);
+            width: 300px; /* Tamanho inicial da área clicável */
+            height: 300px; /* Tamanho inicial da área clicável */
+            z-index: 15; /* Certifique-se de que está acima do fundo, mas abaixo do modal */
+            cursor: pointer;
+        }
+
+        #areaClicavel, #clickCooler {
+            user-select: none; /* Desativa a seleção de texto */
+            -webkit-user-drag: none; /* Desativa o arrastar da imagem no Chrome/Safari */
+           
+        }
+
+        button, a, [role="button"], #areaClicavel, #clickCooler {
+    cursor: url('./IMG/cursor-rainbow.ani'), auto !important;
+}
+    </style>
+</head>
+<body>
+    <div class="fundo"></div>
+    <p><span id="contadorGelinho">0</span></p>
+    <div id="areaClicavel">
+        <img id="clickCooler" src="./IMG/gelinho.png" alt="Cooler" draggable="false">
+    </div>
+    <div id="upgrades">
+        <button id="botaoUpgrade">Upgrades</button>
+    </div>
+    <!-- Modal de Upgrades -->
+    <div id="modalUpgrades" class="modal">/
+        <div class="modal-content">
+            <h2>Upgrades</h2>
+            <button id="upgradeClick">Upgrade: +1 por clique (Custo: 100 gelos)</button>
+            <button id="upgradeAutoClick">Upgrade: +1 automático por segundo (Custo: 5000 gelos)</button>
+            <button id="upgradeCritico">Chance de Click Crítico: +5% (Custo: 3000 gelos)</button>
+            <button id="upgradeArea">Aumentar Área Clicável (Custo: 1000 gelos)</button>
+            <button id="upgradeDrop">Chance de Drop Aleatório: +5% (Custo: 4000 gelos)</button>
+            <button id="upgradeProximaFase">Próxima fase (Custo: 50k gelos)</button>
+            <button id="upgradeEspaco">Habilitar Espaço como Clique (Custo: 5k gelos)</button>
+            <button id="fecharModal">Fechar</button>
+        </div>
+    </div>
+    <canvas id="meuCanvas" width="800px" height="600px"></canvas>
+    <script>
+        let canvas = document.getElementById('meuCanvas');
+        let ctx = canvas.getContext('2d');
+        
+        let gelos = 0; // Contador de gelos
+        let incremento = 1; // Quantidade de gelos por clique
+        let autoClick = 0; // Quantidade de gelos gerados automaticamente por segundo
+        let upgradeClick = 100; // Contador de upgrades de clique
+        let upgradeAutoClick = 5000; // Contador de upgrades automáticos
+        let modoDouradoAtivo = false; // Indica se o modo dourado está ativo
+
+        // Variáveis para os novos upgrades
+        let chanceCritico = 0; // Chance de click crítico
+        let custoCritico = 3000; // Custo inicial do upgrade de click crítico
+        let custoArea = 1000; // Custo inicial do upgrade de área clicável
+        let custoDrop = 4000; // Custo inicial do upgrade de drop aleatório
+        let chanceDrop = 0; // Chance de drop aleatório
+
+        // Variável para controlar a fase atual
+        let faseAtual = 1;
+        let custoProximaFase = 50000; // Custo inicial para passar para a próxima fase
+
+        // Variável para controlar se o espaço está habilitado
+        let espacoHabilitado = false;
+
+        function formatarNumero(numero) {
+            const unidades = ['', 'K', 'M', 'B', 'T', 'Q', 'Qi', 'Sx', 'Sp', 'Oc', 'No']; // Até Nonilhão
+            let indice = 0;
+
+            while (numero >= 1000 && indice < unidades.length - 1) {
+                numero /= 1000;
+                indice++;
+            }
+
+            return numero.toFixed(1).replace(/\.0$/, '') + unidades[indice]; // Remove ".0" se for número inteiro
+        }
+
+        // Atualiza o contador de gelos e os textos dos upgrades
+        function atualizarContador() {
+            document.getElementById('contadorGelinho').innerText = formatarNumero(gelos);
+
+            // Atualiza os textos dos botões de upgrade
+            if (chanceCritico < 40) {
+                document.getElementById('upgradeCritico').innerText = `Chance de Click Crítico: +5% (Custo: ${formatarNumero(custoCritico)} gelos)`;
+            }
+            if (chanceDrop < 40) {
+                document.getElementById('upgradeDrop').innerText = `Chance de Drop Aleatório: +5% (Custo: ${formatarNumero(custoDrop)} gelos)`;
+            }
+            document.getElementById('upgradeClick').innerText = `Upgrade: +5 por clique (Custo: ${formatarNumero(upgradeClick)} gelos)`;
+            document.getElementById('upgradeAutoClick').innerText = `Upgrade: +10 automático por segundo (Custo: ${formatarNumero(upgradeAutoClick)} gelos)`;
+            document.getElementById('upgradeArea').innerText = `Aumentar Área Clicável (Custo: ${formatarNumero(custoArea)} gelos)`;
+            document.getElementById('upgradeProximaFase').innerText = `Próxima fase (Custo: ${formatarNumero(custoProximaFase)} gelos)`;
+        }
+
+        // Função para calcular o tipo de click supremo
+        function calcularClickSupremo() {
+            const chance = Math.random(); // Gera um número entre 0 e 1
+            if (chance <= 0.00001) {
+                return 'supremo'; // 0.001% de chance
+            } else if (chance <= 0.0001) {
+                return 'lendário'; // 0.01% de chance
+            } else if (chance <= 0.0005) {
+                return 'místico'; // 0.05% de chance
+            } else if (chance <= 0.005) {
+                return 'dourado'; // 0.5% de chance
+            }
+            return null; // Sem click supremo
+        }
+
+        // Função para ativar o modo dourado
+        function ativarModoDourado() {
+            if (modoDouradoAtivo) return; // Evita ativar o modo dourado se já estiver ativo
+
+            modoDouradoAtivo = true;
+            incremento = 50; // Define o valor dos cliques para 50
+
+            // Altera a imagem do gelo do clique para o gelo dourado
+            const clickCooler = document.getElementById('clickCooler');
+            clickCooler.src = './IMG/gelo dourado.png'; // Caminho da imagem do gelo dourado
+
+            // Função para mover o gelo para posições aleatórias
+            function moverGeloAleatoriamente() {
+                const x = Math.random() * (window.innerWidth - clickCooler.offsetWidth);
+                const y = Math.random() * (window.innerHeight - clickCooler.offsetHeight);
+                clickCooler.style.left = `${x}px`;
+                clickCooler.style.top = `${y}px`;
+            }
+
+            // Move o gelo para posições aleatórias a cada 1 segundo
+            const intervaloMovimento = setInterval(() => {
+                if (!modoDouradoAtivo) {
+                    clearInterval(intervaloMovimento); // Para o movimento quando o modo dourado termina
+                    return;
+                }
+                moverGeloAleatoriamente();
+            }, 1000);
+
+            // Remove o efeito após 10 segundos
+            setTimeout(() => {
+                modoDouradoAtivo = false;
+                incremento = faseAtual === 1 ? 1 : 10; // Restaura o valor normal dos cliques com base na fase
+                clickCooler.src = faseAtual === 1 ? './IMG/gelinho.png' : './IMG/cooler.png'; // Restaura a imagem correta
+                clickCooler.style.left = '49%'; // Restaura a posição original
+                clickCooler.style.top = '55%';
+            }, 10000); // 10 segundos
+        }
+
+        // Função para calcular a chance de ativar o modo dourado
+        function calcularModoDourado() {
+            if (faseAtual === 1) { // O modo dourado só pode ser ativado na fase 1
+                const chance = Math.random(); // Gera um número entre 0 e 1
+                if (chance <= 0.0005) { // 0.05% de chance
+                    ativarModoDourado();
+                }
+            }
+        }
+
+        // Função para exibir mensagens maiores e aleatórias na tela
+        function exibirMensagem(texto, cor) {
+            const mensagem = document.createElement('div');
+            mensagem.innerText = texto;
+            mensagem.style.position = 'absolute';
+            mensagem.style.color = cor;
+            mensagem.style.fontSize = '48px'; // Aumenta o tamanho do texto
+            mensagem.style.fontWeight = 'bold';
+            mensagem.style.zIndex = 100;
+            mensagem.style.opacity = 1;
+            mensagem.style.transition = 'opacity 1s, transform 1s';
+
+            // Calcula posições aleatórias na tela
+            const offsetX = Math.random() * (window.innerWidth - 200); // Aleatório dentro da largura da tela
+            const offsetY = Math.random() * (window.innerHeight - 100); // Aleatório dentro da altura da tela
+            mensagem.style.top = `${offsetY}px`;
+            mensagem.style.left = `${offsetX}px`;
+
+            document.body.appendChild(mensagem);
+
+            // Remove a mensagem após 1 segundo
+            setTimeout(() => {
+                mensagem.style.opacity = 0;
+                mensagem.style.transform = 'translateY(-20px)';
+                setTimeout(() => mensagem.remove(), 1000);
+            }, 1000);
+        }
+
+        // Função para criar gelos decorativos em posições aleatórias na tela
+        function criarGeloDecorativoAoClicar() {
+            const gelo = document.createElement('img');
+            gelo.src = './IMG/gelinho q vai cair.png'; // Caminho da imagem do gelo decorativo
+            gelo.style.position = 'absolute';
+            gelo.style.width = '60px';
+            gelo.style.height = '60px';
+            gelo.style.zIndex = 10;
+            gelo.style.opacity = 1; // Totalmente visível
+            gelo.classList.add('gelo-animado'); // Adiciona a animação ao gelo decorativo
+
+            // Define posições aleatórias na tela inteira
+            const x = Math.random() * (window.innerWidth - 50); // Aleatório dentro da largura da tela
+            const y = Math.random() * (window.innerHeight - 50); // Aleatório dentro da altura da tela
+
+            gelo.style.left = `${x}px`;
+            gelo.style.top = `${y}px`;
+
+            // Adiciona o gelo ao corpo da página
+            document.body.appendChild(gelo);
+
+            // Remove o gelo automaticamente após 2 segundos
+            setTimeout(() => {
+                gelo.remove();
+            }, 2000);
+        }
+
+        // Evento de clique no cooler
+        document.getElementById('clickCooler').addEventListener('mousedown', (event) => {
+            event.preventDefault(); // Impede a seleção da imagem
+            const cooler = document.getElementById('clickCooler');
+            cooler.style.transform = 'translate(-50%, -50%) scale(0.9)'; // Reduz o tamanho para criar o efeito de afundar
+        });
+
+        document.getElementById('clickCooler').addEventListener('mouseup', () => {
+            const cooler = document.getElementById('clickCooler');
+            cooler.style.animationPlayState = 'running'; // Retoma a animação
+            cooler.style.transform = 'translate(-50%, -50%)'; // Volta ao tamanho original
+        });
+
+        // Modifique o evento de clique na área clicável
+        document.getElementById('areaClicavel').addEventListener('click', (event) => {
+            criarGeloDecorativoAoClicar(); // Cria um gelo decorativo em posição aleatória na tela
+
+            calcularModoDourado(); // Verifica se o modo dourado será ativado
+            const tipoSupremo = calcularClickSupremo();
+            let ganho = incremento;
+
+            // Verifica se o click foi crítico
+            if (Math.random() * 100 < chanceCritico) {
+                ganho *= 2; // Dobra o ganho em caso de click crítico
+                exibirMensagem('Crítico!', 'red'); // Exibe a mensagem "Crítico" em vermelho
+            }
+
+            gelos += ganho;
+
+            // Verifica se um drop aleatório ocorre
+            if (Math.random() * 100 < chanceDrop) {
+                const dropBonus = Math.floor(Math.random() * 100) + 50; // Gera um bônus aleatório
+                gelos += dropBonus;
+                exibirMensagem(`+${dropBonus} gelos!`, 'blue'); // Exibe o valor do drop em azul
+            }
+
+            atualizarContador();
+        });
+
+        // Desabilita o comportamento de arrastar a imagem
+        document.getElementById('clickCooler').addEventListener('dragstart', (event) => {
+            event.preventDefault();
+        });
+
+        // Lógica para abrir/fechar os upgrades
+        const modal = document.getElementById('modalUpgrades');
+        const botaoUpgrade = document.getElementById('botaoUpgrade');
+        const fecharModal = document.getElementById('fecharModal'); // Botão de fechar
+
+        // Alterna entre abrir e fechar o modal ao clicar no botão de upgrades
+        botaoUpgrade.addEventListener('click', () => {
+            if (modal.style.display === 'flex') {
+                modal.style.display = 'none'; // Fecha o modal
+            } else {
+                modal.style.display = 'flex'; // Abre o modal
+            }
+        });
+
+        // Fecha o modal ao clicar no botão "Fechar"
+        fecharModal.addEventListener('click', () => {
+            modal.style.display = 'none'; // Esconde o modal
+        });
+
+        // Fecha o modal ao clicar fora do conteúdo
+        window.addEventListener('click', (event) => {
+            if (event.target === modal) {
+                modal.style.display = 'none'; // Esconde o modal
+            }
+        });
+
+        // Upgrade: Clique
+        document.getElementById('upgradeClick').addEventListener('click', () => {
+            if (gelos >= upgradeClick) {
+                gelos -= upgradeClick;
+                incremento += (faseAtual === 1 ? 1 : 5);
+                // Multiplicador e custo base diferentes por fase
+                if (faseAtual === 1) {
+                    upgradeClick = Math.floor(upgradeClick * 2.5);
+                } else if (faseAtual === 2) {
+                    upgradeClick = Math.floor(upgradeClick * 3.2);
+                } else {
+                    upgradeClick = Math.floor(upgradeClick * 4.2);
+                }
+                atualizarContador();
+            } else {
+                exibirMensagem('Gelinho insuficiente!', 'red');
+            }
+        });
+
+        // Upgrade: AutoClick
+document.getElementById('upgradeAutoClick').addEventListener('click', () => {
+    if (gelos >= upgradeAutoClick) {
+        gelos -= upgradeAutoClick;
+        autoClick += 10;
+        // Multiplicador diferente por fase
+        if (faseAtual === 1) {
+            upgradeAutoClick = Math.floor(upgradeAutoClick * 2.5);
+        } else if (faseAtual === 2) {
+            upgradeAutoClick = Math.floor(upgradeAutoClick * 3.2);
+        } else {
+            upgradeAutoClick = Math.floor(upgradeAutoClick * 4.2);
+        }
+        atualizarContador();
+    } else {
+        exibirMensagem('Gelinho insuficiente!', 'red');
+    }
+});
+
+// Upgrade: Click Crítico
+document.getElementById('upgradeCritico').addEventListener('click', () => {
+    if (gelos >= custoCritico && chanceCritico < 40) {
+        gelos -= custoCritico;
+        chanceCritico += 5;
+        if (faseAtual === 1) {
+            custoCritico = Math.floor(custoCritico * 2.5);
+        } else if (faseAtual === 2) {
+            custoCritico = Math.floor(custoCritico * 3.2);
+        } else {
+            custoCritico = Math.floor(custoCritico * 4.2);
+        }
+        atualizarContador();
+    } else {
+        exibirMensagem('Gelinho insuficiente ou máximo atingido!', 'red');
+    }
+});
+
+// Upgrade: Área Clicável
+document.getElementById('upgradeArea').addEventListener('click', () => {
+    if (gelos >= custoArea) {
+        gelos -= custoArea;
+        let area = document.getElementById('areaClicavel');
+        area.style.width = (area.offsetWidth + 40) + 'px';
+        area.style.height = (area.offsetHeight + 40) + 'px';
+        if (faseAtual === 1) {
+            custoArea = Math.floor(custoArea * 2.5);
+        } else if (faseAtual === 2) {
+            custoArea = Math.floor(custoArea * 3.2);
+        } else {
+            custoArea = Math.floor(custoArea * 4.2);
+        }
+        atualizarContador();
+    } else {
+        exibirMensagem('Gelinho insuficiente!', 'red');
+    }
+});
+
+// Upgrade: Drop Aleatório
+document.getElementById('upgradeDrop').addEventListener('click', () => {
+    if (gelos >= custoDrop && chanceDrop < 40) {
+        gelos -= custoDrop;
+        chanceDrop += 5;
+        if (faseAtual === 1) {
+            custoDrop = Math.floor(custoDrop * 2.5);
+        } else if (faseAtual === 2) {
+            custoDrop = Math.floor(custoDrop * 3.2);
+        } else {
+            custoDrop = Math.floor(custoDrop * 4.2);
+        }
+        atualizarContador();
+    } else {
+        exibirMensagem('Gelinho insuficiente ou máximo atingido!', 'red');
+    }
+});
+
+// Upgrade: Próxima Fase
+document.getElementById('upgradeProximaFase').addEventListener('click', () => {
+    if (gelos >= custoProximaFase) {
+        gelos -= custoProximaFase;
+        faseAtual++;
+        // Reset upgrades e custos base por fase
+        gelos = 0;
+        incremento = faseAtual === 1 ? 1 : 10;
+        autoClick = 0;
+        upgradeClick = (faseAtual === 1) ? 100 : 200; // base maior na fase 2+
+        upgradeAutoClick = (faseAtual === 1) ? 5000 : 12000;
+        chanceCritico = 0;
+        custoCritico = (faseAtual === 1) ? 3000 : 7000;
+        custoArea = (faseAtual === 1) ? 1000 : 3000;
+        custoDrop = (faseAtual === 1) ? 4000 : 9000;
+        chanceDrop = 0;
+        espacoHabilitado = false;
+        custoProximaFase = Math.floor(custoProximaFase * 2.5);
+
+        // Troca a imagem do cooler para a da fase
+        const clickCooler = document.getElementById('clickCooler');
+        if (faseAtual === 1) {
+            clickCooler.src = './IMG/gelinho.png';
+        } else {
+            clickCooler.src = './IMG/cooler.png';
+        }
+
+        atualizarContador();
+        atualizarTextoUpgradeClick();
+        exibirMensagem('Nova fase! Upgrades resetados!', 'gold');
+    } else {
+        exibirMensagem('Gelinho insuficiente!', 'red');
+    }
+});
+
+// Upgrade: Espaço como Clique
+document.getElementById('upgradeEspaco').addEventListener('click', () => {
+    if (gelos >= 5000 && !espacoHabilitado) {
+        gelos -= 5000;
+        espacoHabilitado = true;
+        atualizarContador();
+        exibirMensagem('Espaço habilitado!', 'green');
+    } else if (espacoHabilitado) {
+        exibirMensagem('Espaço já habilitado!', 'orange');
+    } else {
+        exibirMensagem('Gelinho insuficiente!', 'red');
+    }
+});
+
+// Evento global para detectar espaço
+document.addEventListener('keydown', (event) => {
+    if (espacoHabilitado && (event.code === 'Space' || event.key === ' ')) {
+        // Simula clique na área clicável
+        document.getElementById('areaClicavel').click();
+    }
+});
+
+// Função para atualizar o texto do botão de clique
+function atualizarTextoUpgradeClick() {
+    const texto = faseAtual === 1
+        ? `Upgrade: +1 por clique (Custo: ${formatarNumero(upgradeClick)} gelos)`
+        : `Upgrade: +5 por clique (Custo: ${formatarNumero(upgradeClick)} gelos)`;
+    document.getElementById('upgradeClick').innerText = texto;
+}
+
+// Chame atualizarTextoUpgradeClick() dentro de atualizarContador também:
+function atualizarContador() {
+    document.getElementById('contadorGelinho').innerText = formatarNumero(gelos);
+
+    if (chanceCritico < 40) {
+        document.getElementById('upgradeCritico').innerText = `Chance de Click Crítico: +5% (Custo: ${formatarNumero(custoCritico)} gelos)`;
+    }
+    if (chanceDrop < 40) {
+        document.getElementById('upgradeDrop').innerText = `Chance de Drop Aleatório: +5% (Custo: ${formatarNumero(custoDrop)} gelos)`;
+    }
+    atualizarTextoUpgradeClick();
+    document.getElementById('upgradeAutoClick').innerText = `Upgrade: +10 automático por segundo (Custo: ${formatarNumero(upgradeAutoClick)} gelos)`;
+    document.getElementById('upgradeArea').innerText = `Aumentar Área Clicável (Custo: ${formatarNumero(custoArea)} gelos)`;
+    document.getElementById('upgradeProximaFase').innerText = `Próxima fase (Custo: ${formatarNumero(custoProximaFase)} gelos)`;
+}
+        setInterval(() => {
+            gelos += autoClick;
+            atualizarContador();
+        }, 1000);
+
+        function obterMultiplicadorDeFase() {
+            if (faseAtual === 1) return 1.4;
+            else if (faseAtual === 2) return 3.5;
+            else return 4.7;
+        }
+
+        document.addEventListener('keydown', (event) => {
+            if (event.code === 'Tab') {
+                event.preventDefault();
+                if (modal.style.display === 'flex') modal.style.display = 'none';
+                else modal.style.display = 'flex';
+            }
+        });
+
+        // Inicializa textos
+        atualizarContador();
+    </script>
+</body>
+</html>
