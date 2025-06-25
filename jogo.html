@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jogo final</title>
+    <style>
+        html{
+            cursor: url('./IMG/cursor-rainbow.ani'), auto; /* Define o cursor personalizado */
+            z-index: 99999;
+        }
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden; /* Evita barras de rolagem */
+            background-color: #7bbbe1;
+           
+        }
+        #contadorGelinho {
+            position: absolute;
+            top: 100px;
+            left: 670px;
+            font-size: 87px;
+            color: black; /* Cor do texto */
+            z-index: 10; /* Coloca o contador acima de outros elementos */
+            font-family: 'Minecraft', sans-serif; /* Fonte do texto */
+        }
+
+        #upgradeForca {
+            position: absolute;
+            margin-top: 600px;
+            left: 500px;
+            font-size: 30px;
+            color: black; /* Cor do texto */
+            z-index: 10; /* Coloca o contador acima de outros elementos */
+            font-family: 'Minecraft', sans-serif; /* Fonte do texto */
+        }
+
+        .fundo {
+            position: fixed; /* Fixa o fundo na tela */
+            top: 0;
+            left: 0;
+            width: 100vw; /* Largura total da janela */
+            height: 100vh; /* Altura total da janela */
+            background-image: url('./IMG/fundotalvez.png'); /* Caminho da imagem de fundo */
+            background-size: cover; /* Faz a imagem cobrir toda a tela */
+            background-position: center; /* Centraliza a imagem */
+            background-repeat: no-repeat; /* Evita repetição da imagem */
+            z-index: -1; /* Coloca o fundo atrás de todos os elementos */
+        }
+
+        button{
+            font-family: 'Minecraft', sans-serif; /* Fonte do texto */
+            font-size: 20px; /* Tamanho da fonte */
+            letter-spacing: 0.1em; /* Espaçamento entre letras */
+            color: white; /* Cor do texto */
+            background-color: #4CAF50; /* Verde */
+            border: none; /* Sem borda */
+            border-radius: 5px; /* Bordas arredondadas */
+            cursor: pointer; /* Muda o cursor para indicar que é clicável */
+            margin: 10px 0; /* Margem vertical entre os botões */
+            z-index: 100;
+        }
+
+        #botaoUpgrade {
+            position: absolute;
+            top: 520px;
+            left: 300px;
+            padding: 10px 20px;
+            font-size: 40px;
+            background-color: #4CAF50; /* Verde */
+            color: white; /* Texto branco */
+            border: none; /* Sem borda */
+            border-radius: 5px; /* Bordas arredondadas */
+            cursor: pointer; /* Muda o cursor para indicar que é clicável */
+        }
+
+        @keyframes girarGelo {
+            0% {
+                transform: translate(-50%, -50%) rotate(0deg); /* Sem rotação */
+            }
+            50% {
+                transform: translate(-50%, -50%) rotate(30deg); /* Gira até 30 graus */
+            }
+            100% {
+                transform: translate(-50%, -50%) rotate(-30deg); /* Gira para -30 graus */
+            }
+        }
+
+
+        #clickCooler {
+            width: 300px;
+            height: 300px;
+            position: absolute;
+            top: 55%;
+            left: 49%;
+            transform: translate(-50%, -50%);
+            cursor: pointer;
+            z-index: 20;
+            animation: girarGelo 6s infinite alternate ease-in-out; /* Animação suave */
+            transform-origin: center center; /* Garante que o centro seja o ponto de rotação */
+        }
+
+        #clickCooler.paused {
+            animation-play-state: paused; /* Pausa a animação */
+        }
+
+        body.modo-dourado {
+            animation: piscarDourado 0.5s infinite alternate; /* Pisca a cada 0.5s */
+        }
+
+        @keyframes piscarDourado {
+            0% {
+                background-color: #ffd700; /* Dourado */
+            }
+            100% {
+                background-color: #7bbbe1; /* Cor original */
+            }
+        }
+
+        .fundo.modo-dourado {
+            filter: brightness(1.5) saturate(2); /* Deixa os gelos mais brilhantes */
+        }
+
+        .modal {
+            display: none; /* Escondido por padrão */
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.5); /* Fundo escuro semi-transparente */
+            backdrop-filter: blur(5px); /* Efeito de desfoque no fundo */
+            z-index: 100; /* Coloca o modal acima de tudo */
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            width: 400px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .modal-content h2 {
+            margin-bottom: 20px;
+        }
+
+        .modal-content button {
+            display: block;
+            margin: 10px auto;
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .modal-content button:hover {
+            background-color: #45a049;
+        }
+
+        #fecharModal {
+            background-color: #f44336; /* Vermelho para o botão de fechar */
+        }
+
+        #fecharModal:hover {
+            background-color: #d32f2f;
+        }
+
+        .gelo-animado {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            z-index: -1;
+            opacity: 1;
+            transform: translateY(0);
+            animation: aparecerDesaparecer 2s forwards; /* Animação suave */
+        }
+
+        @keyframes aparecerDesaparecer {
+            0% {
+                opacity: 1;
+                transform: translateY(0); /* Posição inicial */
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-50px); /* Move para cima e desaparece */
+            }
+        }
+
+        #areaClicavel {
+            position: absolute;
+            top: 55%;
+            left: 49%;
+            transform: translate(-50%, -50%);
+            width: 300px; /* Tamanho inicial da área clicável */
+            height: 300px; /* Tamanho inicial da área clicável */
+            z-index: 15; /* Certifique-se de que está acima do fundo, mas abaixo do modal */
+            cursor: pointer;
+        }
+
+        #areaClicavel, #clickCooler {
+            user-select: none; /* Desativa a seleção de texto */
+            -webkit-user-drag: none; /* Desativa o arrastar da imagem no Chrome/Safari */
+           
+        }
+
+        button, a, [role="button"], #areaClicavel, #clickCooler {
+    cursor: url('./IMG/cursor-rainbow.ani'), auto !important;
+}
+    </style>
+</head>
+<body>
+    <div class="fundo"></div>
+    <div id="headerDesafio" style="display:none; position:absolute; top:40px; left:50%; transform:translateX(-50%); z-index:30; display:flex; align-items:center; gap:40px;">
+        <span id="tituloQuebre" style="font-size:90px; color:#d32f2f; font-family:'Minecraft',sans-serif; font-weight:bold; letter-spacing:0.05em;">QUEBRE!!</span>
+        <span id="timerDesafio" style="font-size:60px; color:black; font-family:'Minecraft',sans-serif; font-weight:bold;"></span>
+    </div>
+    <p id="contadorGelinhoWrapper"><span id="contadorGelinho">0</span></p>
+    <div id="areaClicavel">
+        <img id="clickCooler" src="./IMG/gelinho.png" alt="Cooler" draggable="false">
+    </div>
+    <div id="upgrades">
+        <button id="upgradeForca">+1 força (custa 200 hits)</button>
+    </div>
+    <div id="finalMensagem" style="display:none; position:absolute; top:300px; left:50%; transform:translateX(-50%); background:#222; color:#fff; padding:30px; border-radius:10px; text-align:center; z-index:300;">
+        <h2 id="tituloFinal"></h2>
+        <p id="textoFinal"></p>
+        <button onclick="location.reload()">Jogar de novo</button>
+    </div>
+    <canvas id="meuCanvas" width="800px" height="600px"></canvas>
+    <script>
+        let hits = 0;
+        let forca = 1;
+        let espacoHabilitado = false;
+        let desafioAtivo = false;
+        let clicksDesafio = 0;
+        let tempoRestante = 10.00;
+        let intervaloDesafio;
+        let desafioComecou = false;
+
+        // Esconde o header do desafio ao iniciar a página
+        document.getElementById('headerDesafio').style.display = 'none';
+
+        function atualizarContador() {
+            if (!desafioAtivo) {
+                document.getElementById('contadorGelinho').innerText = hits;
+            }
+            if (hits >= 1000 && !espacoHabilitado) {
+                espacoHabilitado = true;
+                exibirMensagem('Espaço habilitado!', 'green');
+            }
+            if (hits >= 5000 && !desafioAtivo) {
+                iniciarDesafioFinal();
+            }
+        }
+
+        function exibirMensagem(texto, cor) {
+            const mensagem = document.createElement('div');
+            mensagem.innerText = texto;
+            mensagem.style.position = 'absolute';
+            mensagem.style.color = cor;
+            mensagem.style.fontSize = '48px';
+            mensagem.style.fontWeight = 'bold';
+            mensagem.style.zIndex = 100;
+            mensagem.style.opacity = 1;
+            mensagem.style.transition = 'opacity 1s, transform 1s';
+            const offsetX = Math.random() * (window.innerWidth - 200);
+            const offsetY = Math.random() * (window.innerHeight - 100);
+            mensagem.style.top = `${offsetY}px`;
+            mensagem.style.left = `${offsetX}px`;
+            document.body.appendChild(mensagem);
+            setTimeout(() => {
+                mensagem.style.opacity = 0;
+                mensagem.style.transform = 'translateY(-20px)';
+                setTimeout(() => mensagem.remove(), 1000);
+            }, 1000);
+        }
+
+        function criarGeloDecorativoAoClicar() {
+            if (desafioAtivo) return; // Não cria efeito durante o desafio final
+            const gelo = document.createElement('img');
+            gelo.src = './IMG/gelinho q vai cair.png';
+            gelo.style.position = 'absolute';
+            gelo.style.width = '60px';
+            gelo.style.height = '60px';
+            gelo.style.zIndex = 10;
+            gelo.style.opacity = 1;
+            gelo.classList.add('gelo-animado');
+            const x = Math.random() * (window.innerWidth - 50);
+            const y = Math.random() * (window.innerHeight - 50);
+            gelo.style.left = `${x}px`;
+            gelo.style.top = `${y}px`;
+            document.body.appendChild(gelo);
+            setTimeout(() => {
+                gelo.remove();
+            }, 2000);
+        }
+
+        function darHit() {
+            if (desafioAtivo) {
+                if (!desafioComecou) return;
+                clicksDesafio++;
+                if (clicksDesafio >= 50) {
+                    finalizarDesafio(true);
+                }
+                return;
+            }
+            hits += forca;
+            atualizarContador();
+        }
+
+        document.getElementById('areaClicavel').addEventListener('click', () => {
+            if (!desafioAtivo) criarGeloDecorativoAoClicar();
+            darHit();
+        });
+
+        document.getElementById('upgradeForca').addEventListener('click', () => {
+            if (hits >= 200 && !desafioAtivo) {
+                forca += 1;
+                hits -= 200;
+                exibirMensagem('Força aumentada!', 'blue');
+                atualizarContador();
+            } else if (!desafioAtivo) {
+                exibirMensagem('Precisa de 200 hits!', 'red');
+            }
+        });
+
+        document.addEventListener('keydown', (event) => {
+            if (espacoHabilitado && (event.code === 'Space' || event.key === ' ')) {
+                darHit();
+            }
+        });
+
+        // Efeito visual do click
+        document.getElementById('clickCooler').addEventListener('mousedown', (event) => {
+            event.preventDefault();
+            const cooler = document.getElementById('clickCooler');
+            cooler.style.transform = 'translate(-50%, -50%) scale(0.9)';
+        });
+        document.getElementById('clickCooler').addEventListener('mouseup', () => {
+            const cooler = document.getElementById('clickCooler');
+            cooler.style.animationPlayState = 'running';
+            cooler.style.transform = 'translate(-50%, -50%)';
+        });
+        document.getElementById('clickCooler').addEventListener('dragstart', (event) => {
+            event.preventDefault();
+        });
+
+        function iniciarDesafioFinal() {
+            desafioAtivo = true;
+            desafioComecou = false;
+            document.getElementById('contadorGelinhoWrapper').style.display = 'none';
+            document.getElementById('headerDesafio').style.display = 'flex';
+            document.getElementById('clickCooler').src = './IMG/gelo rachado.png';
+            
+            clicksDesafio = 0;
+            tempoRestante = 10.00;
+            atualizarTimerDesafio();
+            setTimeout(() => {
+                desafioComecou = true;
+                iniciarTimerDesafio();
+            }, 500); // Pequeno delay para o jogador ver o título antes de começar
+        }
+
+        function iniciarTimerDesafio() {
+            const start = performance.now();
+            function tick(now) {
+                if (!desafioAtivo) return;
+                tempoRestante = Math.max(0, 10 - ((now - start) / 1000));
+                atualizarTimerDesafio();
+                if (tempoRestante > 0 && clicksDesafio < 50) {
+                    requestAnimationFrame(tick);
+                } else {
+                    if (clicksDesafio >= 50) {
+                        finalizarDesafio(true);
+                    } else {
+                        finalizarDesafio(false);
+                    }
+                }
+            }
+            requestAnimationFrame(tick);
+        }
+
+        function atualizarTimerDesafio() {
+            document.getElementById('timerDesafio').innerText = tempoRestante.toFixed(2) + "s";
+        }
+
+        function finalizarDesafio(venceu) {
+            desafioAtivo = false;
+            document.getElementById('headerDesafio').style.display = 'none';
+            if (venceu) {
+                window.location.href = "finalbom.html";
+                return;
+            }else{
+                 window.location.href = "finalruim.html";
+                return;
+            }
+        }
+
+        atualizarContador();
+    </script>
+</body>
+</html>
